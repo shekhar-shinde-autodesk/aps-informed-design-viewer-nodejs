@@ -1,92 +1,92 @@
-const { AuthenticationClient, Scopes } = require('@aps_sdk/authentication');
-const { OssClient, Region, PolicyKey } = require('@aps_sdk/oss');
-const { ModelDerivativeClient, View, OutputType } = require('@aps_sdk/model-derivative');
-const { APS_CLIENT_ID, APS_CLIENT_SECRET, APS_BUCKET } = require('../config.js');
+const { SdkManagerBuilder } = require("@aps_sdk/autodesk-sdkmanager");
+const {
+  AuthenticationClient,
+  Scopes,
+  ResponseType,
+} = require("@aps_sdk/authentication");
+const {
+  APS_CLIENT_ID,
+  APS_CLIENT_SECRET,
+  APS_CALLBACK_URL,
+} = require("../config.js");
 
-const authenticationClient = new AuthenticationClient();
-const ossClient = new OssClient();
-const modelDerivativeClient = new ModelDerivativeClient();
+const sdkManager = SdkManagerBuilder.create().build();
+const authenticationClient = new AuthenticationClient(sdkManager);
+const service = (module.exports = {});
 
-const service = module.exports = {};
+service.getAuthorizationUrl = () =>
+  authenticationClient.authorize(
+    APS_CLIENT_ID,
+    ResponseType.Code,
+    APS_CALLBACK_URL,
+    [Scopes.DataRead, Scopes.DataCreate, Scopes.ViewablesRead, Scopes.DataWrite]
+  );
 
-async function getInternalToken() {
-    const credentials = await authenticationClient.getTwoLeggedToken(APS_CLIENT_ID, APS_CLIENT_SECRET, [
-        Scopes.DataRead,
-        Scopes.DataCreate,
-        Scopes.DataWrite,
-        Scopes.BucketCreate,
-        Scopes.BucketRead
-    ]);
-    return credentials.access_token;
-}
-
-service.getViewerToken = async () => {
-    return await authenticationClient.getTwoLeggedToken(APS_CLIENT_ID, APS_CLIENT_SECRET, [Scopes.ViewablesRead]);
-};
-
-service.ensureBucketExists = async (bucketKey) => {
-    const accessToken = await getInternalToken();
-    try {
-        await ossClient.getBucketDetails(bucketKey, { accessToken });
-    } catch (err) {
-        if (err.axiosError.response.status === 404) {
-            await ossClient.createBucket(Region.Us, { bucketKey: bucketKey, policyKey: PolicyKey.Persistent }, { accessToken});
-        } else {
-            throw err;  
-        }
+service.authCallbackMiddleware = async (req, res, next) => {
+  const internalCredentials = await authenticationClient.getThreeLeggedToken(
+    APS_CLIENT_ID,
+    req.query.code,
+    APS_CALLBACK_URL,
+    {
+      clientSecret: APS_CLIENT_SECRET,
     }
-};
-
-service.listObjects = async () => {
-    await service.ensureBucketExists(APS_BUCKET);
-    const accessToken = await getInternalToken();
-    let resp = await ossClient.getObjects(APS_BUCKET, { limit: 64, accessToken });
-    let objects = resp.items;
-    while (resp.next) {
-        const startAt = new URL(resp.next).searchParams.get('startAt');
-        resp = await ossClient.getObjects(APS_BUCKET, { limit: 64, startAt, accessToken });
-        objects = objects.concat(resp.items);
+  );
+  const publicCredentials = await authenticationClient.refreshToken(
+    internalCredentials.refresh_token,
+    APS_CLIENT_ID,
+    {
+      clientSecret: APS_CLIENT_SECRET,
+      scopes: [Scopes.ViewablesRead],
     }
-    return objects;
+  );
+  req.session.public_token = publicCredentials.access_token;
+  req.session.internal_token = internalCredentials.access_token;
+  req.session.refresh_token = publicCredentials.refresh_token;
+  req.session.expires_at = Date.now() + internalCredentials.expires_in * 1000;
+  next();
 };
 
-service.uploadObject = async (objectName, filePath) => {
-    await service.ensureBucketExists(APS_BUCKET);
-    const accessToken = await getInternalToken();
-    const obj = await ossClient.uploadObject(APS_BUCKET, objectName, filePath, { accessToken });
-    return obj;
+service.authRefreshMiddleware = async (req, res, next) => {
+  const { refresh_token, expires_at } = req.session;
+  if (!refresh_token) {
+    res.status(401).end();
+    return;
+  }
+
+  if (expires_at < Date.now()) {
+    const internalCredentials = await authenticationClient.refreshToken(
+      refresh_token,
+      APS_CLIENT_ID,
+      {
+        clientSecret: APS_CLIENT_SECRET,
+        scopes: [Scopes.DataRead, Scopes.DataCreate, Scopes.DataWrite],
+      }
+    );
+    const publicCredentials = await authenticationClient.refreshToken(
+      internalCredentials.refresh_token,
+      APS_CLIENT_ID,
+      {
+        clientSecret: APS_CLIENT_SECRET,
+        scopes: [Scopes.ViewablesRead],
+      }
+    );
+    req.session.public_token = publicCredentials.access_token;
+    req.session.internal_token = internalCredentials.access_token;
+    req.session.refresh_token = publicCredentials.refresh_token;
+    req.session.expires_at = Date.now() + internalCredentials.expires_in * 1000;
+  }
+  req.internalOAuthToken = {
+    access_token: req.session.internal_token,
+    expires_in: Math.round((req.session.expires_at - Date.now()) / 1000),
+  };
+  req.publicOAuthToken = {
+    access_token: req.session.public_token,
+    expires_in: Math.round((req.session.expires_at - Date.now()) / 1000),
+  };
+  next();
 };
 
-service.translateObject = async (urn, rootFilename) => {
-    const accessToken = await getInternalToken();
-    const job = await modelDerivativeClient.startJob({
-        input: {
-            urn,
-            compressedUrn: !!rootFilename,
-            rootFilename
-        },
-        output: {
-            formats: [{
-                views: [View._2d, View._3d],
-                type: OutputType.Svf2
-            }]
-        }
-    }, { accessToken });
-    return job.result;
+service.getUserProfile = async (accessToken) => {
+  const resp = await authenticationClient.getUserInfo(accessToken);
+  return resp;
 };
-
-service.getManifest = async (urn) => {
-    const accessToken = await getInternalToken();
-    try {
-        const manifest = await modelDerivativeClient.getManifest(urn, { accessToken });
-        return manifest;
-    } catch (err) {
-        if (err.axiosError.response.status === 404) {
-            return null;
-        } else {
-            throw err;
-        }
-    }
-};
-
-service.urnify = (id) => Buffer.from(id).toString('base64').replace(/=/g, '');
