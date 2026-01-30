@@ -13,13 +13,28 @@ const {
 const sdkManager = SdkManagerBuilder.create().build();
 const authenticationClient = new AuthenticationClient(sdkManager);
 const service = (module.exports = {});
+const scopes = [
+  Scopes.UserProfileRead,
+  Scopes.UserRead,
+  Scopes.DataRead,
+  Scopes.DataCreate,
+  Scopes.DataWrite,
+  Scopes.DataSearch,
+  Scopes.BucketCreate,
+  Scopes.BucketRead,
+  Scopes.BucketUpdate,
+  Scopes.BucketDelete,
+  Scopes.AccountRead,
+  Scopes.AccountWrite,
+  Scopes.Openid,
+];
 
 service.getAuthorizationUrl = () =>
   authenticationClient.authorize(
     APS_CLIENT_ID,
     ResponseType.Code,
     APS_CALLBACK_URL,
-    [Scopes.DataRead, Scopes.DataCreate, Scopes.ViewablesRead, Scopes.DataWrite]
+    scopes
   );
 
 service.authCallbackMiddleware = async (req, res, next) => {
@@ -36,7 +51,7 @@ service.authCallbackMiddleware = async (req, res, next) => {
     APS_CLIENT_ID,
     {
       clientSecret: APS_CLIENT_SECRET,
-      scopes: [Scopes.ViewablesRead],
+      scopes: scopes,
     }
   );
   req.session.public_token = publicCredentials.access_token;
@@ -59,7 +74,7 @@ service.authRefreshMiddleware = async (req, res, next) => {
       APS_CLIENT_ID,
       {
         clientSecret: APS_CLIENT_SECRET,
-        scopes: [Scopes.DataRead, Scopes.DataCreate, Scopes.DataWrite],
+        scopes: scopes,
       }
     );
     const publicCredentials = await authenticationClient.refreshToken(
@@ -67,7 +82,7 @@ service.authRefreshMiddleware = async (req, res, next) => {
       APS_CLIENT_ID,
       {
         clientSecret: APS_CLIENT_SECRET,
-        scopes: [Scopes.ViewablesRead],
+        scopes: scopes,
       }
     );
     req.session.public_token = publicCredentials.access_token;
