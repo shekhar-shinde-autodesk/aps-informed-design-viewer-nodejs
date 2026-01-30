@@ -104,4 +104,5 @@ service.authRefreshMiddleware = async (req, res, next) => {
 service.getUserProfile = async (accessToken) => {
   const resp = await authenticationClient.getUserInfo(accessToken);
   return resp;
+
 };
