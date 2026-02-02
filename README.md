@@ -1,4 +1,4 @@
-# Simple Viewer (Node.js)
+# Informed Design Viewer (Node.js)
 
 ![platforms](https://img.shields.io/badge/platform-windows%20%7C%20osx%20%7C%20linux-lightgray.svg)
 [![node.js](https://img.shields.io/badge/Node.js-20.13-blue.svg)](https://nodejs.org)
@@ -7,7 +7,7 @@
 
 [Autodesk Platform Services](https://aps.autodesk.com) application built by following
 the [Simple Viewer](https://tutorials.autodesk.io/tutorials/simple-viewer/) tutorial
-from https://tutorials.autodesk.io.
+from https://tutorials.autodesk.io and [Informed Design Viewer Extension Developer Guide](https://aps.autodesk.com/en/docs/informed-design/v1/developers-guide/viewer/).
 
 ![thumbnail](thumbnail.png)
 
@@ -18,19 +18,19 @@ from https://tutorials.autodesk.io.
 - [APS credentials](https://forge.autodesk.com/en/docs/oauth/v2/tutorials/create-app)
 - [Node.js](https://nodejs.org) (Long Term Support version is recommended)
 - Command-line terminal such as [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview)
-or [bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) (should already be available on your system)
+  or [bash](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) (should already be available on your system)
 
 > We recommend using [Visual Studio Code](https://code.visualstudio.com) which, among other benefits,
 > provides an [integrated terminal](https://code.visualstudio.com/docs/terminal/basics) as well.
 
 ### Setup & Run
 
-- Clone this repository: `git clone https://github.com/autodesk-platform-services/aps-simple-viewer-nodejs`
-- Go to the project folder: `cd aps-simple-viewer-nodejs`
+- Clone this repository: `git clone https://github.com/autodesk-platform-services/aps-informed-design-viewer-nodejs`
+- Go to the project folder: `cd aps-informed-design-viewer-nodejs`
 - Install Node.js dependencies: `npm install`
 - Open the project folder in a code editor of your choice
 - Create a _.env_ file in the project folder, and populate it with the snippet below,
-replacing `<client-id>` and `<client-secret>` with your APS Client ID and Client Secret:
+  replacing `<client-id>` and `<client-secret>` with your APS Client ID and Client Secret:
 
 ```bash
 APS_CLIENT_ID="<client-id>"
@@ -38,7 +38,7 @@ APS_CLIENT_SECRET="<client-secret>"
 ```
 
 - Run the application, either from your code editor, or by running `npm start` in terminal
-- Open http://localhost:8080
+- Open http://localhost:8080?productId=<PRODUCT_ID>&releaseId=<RELEASE_ID>&accessId=<URL_ENCODED_ACCESS_ID>&accessType=<ACCESS_TYPE>
 
 > When using [Visual Studio Code](https://code.visualstudio.com), you can run & debug
 > the application by pressing `F5`.

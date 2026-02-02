@@ -25,6 +25,7 @@ function popProductReleaseData() {
   if (!productReleaseData) {
     throw new Error("No product release data found");
   }
+  localStorage.removeItem("productReleaseData");
   return productReleaseData;
 }
 

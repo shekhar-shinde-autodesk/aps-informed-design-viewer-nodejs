@@ -76,6 +76,6 @@ export function createProductReleaseData({
 export async function loadModel(extension, productReleaseInput) {
   const productReleaseData = createProductReleaseData(productReleaseInput);
   extension.setProductReleaseDataToFetch(productReleaseData);
-  await extension.fetchProductRelease();
-  return extension.loadProductReleaseDefaultVariantSVF();
+  extension.fetchProductRelease();
+  extension.loadProductReleaseDefaultVariantSVF();
 }
