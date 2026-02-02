@@ -35,6 +35,7 @@ replacing `<client-id>` and `<client-secret>` with your APS Client ID and Client
 ```bash
 APS_CLIENT_ID="<client-id>"
 APS_CLIENT_SECRET="<client-secret>"
+APS_CALLBACK_URL="http://localhost:8080/api/auth/callback"
 ```
 
 - Run the application, either from your code editor, or by running `npm start` in terminal
