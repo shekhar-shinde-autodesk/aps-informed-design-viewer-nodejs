@@ -49,12 +49,12 @@ export function initViewer(container) {
 }
 
 function ensureStringField(name, value) {
-  if (typeof value !== "string") {
-    throw new Error(`${name} must be a string`);
-  }
-  const trimmed = value.trim();
+  const trimmed = value?.trim();
   if (!trimmed) {
-    throw new Error(`${name} is required`);
+    throw new Error(`${name} query parameter is required. Please check the URL and try again.`);
+  }
+  if (typeof value !== "string") {
+    throw new Error(`${name} query parameter must be a string. Please check the URL and try again.`);
   }
   return trimmed;
 }

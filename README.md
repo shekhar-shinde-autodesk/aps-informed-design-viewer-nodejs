@@ -16,7 +16,7 @@ from https://tutorials.autodesk.io and [Informed Design Viewer Extension Develop
 ### Prerequisites
 
 - [APS credentials](https://forge.autodesk.com/en/docs/oauth/v2/tutorials/create-app)
-- [Node.js](https://nodejs.org) (Long Term Support version is recommended)
+- [Node.js](https://nodejs.org) (Version 22.*.* is recommended - Long Term Support)
 - Command-line terminal such as [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview)
   or [bash](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) (should already be available on your system)
 
@@ -29,12 +29,15 @@ from https://tutorials.autodesk.io and [Informed Design Viewer Extension Develop
 - Go to the project folder: `cd aps-informed-design-viewer-nodejs`
 - Install Node.js dependencies: `npm install`
 - Open the project folder in a code editor of your choice
-- Create a _.env_ file in the project folder, and populate it with the snippet below,
-  replacing `<client-id>` and `<client-secret>` with your APS Client ID and Client Secret:
+- Create a _.env_ file in the project folder, and populate it with the snippet below
+  - Replace `<client-id>` and `<client-secret>` with your APS Client ID and Client Secret
+  - *IMPORTANT* Add the following URL to the "Callback URL" section of your APS application
+    - http://localhost:8080/api/auth/callback
 
 ```bash
 APS_CLIENT_ID="<client-id>"
 APS_CLIENT_SECRET="<client-secret>"
+APS_CALLBACK_URL=http://localhost:8080/api/auth/callback
 ```
 
 - Run the application, either from your code editor, or by running `npm start` in terminal
