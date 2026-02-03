@@ -42,7 +42,10 @@ APS_CALLBACK_URL=http://localhost:8080/api/auth/callback
 
 - Run the application, either from your code editor, or by running `npm start` in terminal
 - Ok, you are ready to view your first Product using the Informed Design Viewer Extension!
-- The app will only load the Autodesk Viewer with an Informed Design product if the correct URL query parameters are provided using http://localhost:8080?productId=<PRODUCT_ID>&releaseId=<RELEASE_ID>&accessId=<URL_ENCODED_ACCESS_ID>&accessType=<ACCESS_TYPE>
+- The app will only load the Autodesk Viewer with an Informed Design product if the correct URL query parameters are provided using 
+  ```
+  http://localhost:8080?productId=<PRODUCT_ID>&releaseId=<RELEASE_ID>&accessId=<URL_ENCODED_ACCESS_ID>&accessType=<ACCESS_TYPE>
+  ```
   - You can find the required values by retrieving the data from the Informed Design API https://aps.autodesk.com/developer/documentation 
 
 > When using [Visual Studio Code](https://code.visualstudio.com), you can run & debug
