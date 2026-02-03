@@ -9,13 +9,15 @@
 the [Simple Viewer](https://tutorials.autodesk.io/tutorials/simple-viewer/) tutorial
 from https://tutorials.autodesk.io and [Informed Design Viewer Extension Developer Guide](https://aps.autodesk.com/en/docs/informed-design/v1/developers-guide/viewer/).
 
-![thumbnail](thumbnail.png)
+![thumbnail](static/images/thumbnail.png)
 
 ## Development
 
 ### Prerequisites
 
 - [APS credentials](https://forge.autodesk.com/en/docs/oauth/v2/tutorials/create-app)
+  - Once you have created your APS app, add http://localhost:8080/api/auth/callback to the "Callback URL" section of your APS application
+    ![aps-callback-url](static/images/aps-callback.png)
 - [Node.js](https://nodejs.org) (Version 22.*.* is recommended - Long Term Support)
 - Command-line terminal such as [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/overview)
   or [bash](<https://en.wikipedia.org/wiki/Bash_(Unix_shell)>) (should already be available on your system)
@@ -31,8 +33,6 @@ from https://tutorials.autodesk.io and [Informed Design Viewer Extension Develop
 - Open the project folder in a code editor of your choice
 - Create a _.env_ file in the project folder, and populate it with the snippet below
   - Replace `<client-id>` and `<client-secret>` with your APS Client ID and Client Secret
-  - *IMPORTANT* Add the following URL to the "Callback URL" section of your APS application
-    - http://localhost:8080/api/auth/callback
 
 ```bash
 APS_CLIENT_ID="<client-id>"
@@ -41,7 +41,9 @@ APS_CALLBACK_URL=http://localhost:8080/api/auth/callback
 ```
 
 - Run the application, either from your code editor, or by running `npm start` in terminal
-- Open http://localhost:8080?productId=<PRODUCT_ID>&releaseId=<RELEASE_ID>&accessId=<URL_ENCODED_ACCESS_ID>&accessType=<ACCESS_TYPE>
+- Ok, you are ready to view your first Product using the Informed Design Viewer Extension!
+- The app will only load the Autodesk Viewer with an Informed Design product if the correct URL query parameters are provided using http://localhost:8080?productId=<PRODUCT_ID>&releaseId=<RELEASE_ID>&accessId=<URL_ENCODED_ACCESS_ID>&accessType=<ACCESS_TYPE>
+  - You can find the required values by retrieving the data from the Informed Design API https://aps.autodesk.com/developer/documentation 
 
 > When using [Visual Studio Code](https://code.visualstudio.com), you can run & debug
 > the application by pressing `F5`.
