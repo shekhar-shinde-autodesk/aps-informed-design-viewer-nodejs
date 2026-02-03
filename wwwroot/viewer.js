@@ -1,4 +1,4 @@
-/// import * as Autodesk from "@types/forge-viewer";
+import { productIdQueryParam, releaseIdQueryParam, accessIdQueryParam, accessTypeQueryParam } from "./constants.js";
 
 async function getAccessToken(callback) {
   try {
@@ -59,6 +59,14 @@ function ensureStringField(name, value) {
   return trimmed;
 }
 
+function ensureValidUuidField(name, value) {
+  const trimmed = ensureStringField(name, value);
+  if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed)) {
+    throw new Error(`${name} query parameter must be a valid UUID. Please check the URL and try again.`);
+  }
+  return trimmed;
+}
+
 export function createProductReleaseData({
   productId,
   releaseId,
@@ -66,10 +74,10 @@ export function createProductReleaseData({
   accessType,
 }) {
   return {
-    productId: ensureStringField("productId", productId),
-    releaseId: ensureStringField("releaseId", releaseId),
-    accessId: ensureStringField("accessId", accessId),
-    accessType: ensureStringField("accessType", accessType),
+    productId: ensureValidUuidField(productIdQueryParam, productId),
+    releaseId: ensureValidUuidField(releaseIdQueryParam, releaseId),
+    accessId: ensureStringField(accessIdQueryParam, accessId),
+    accessType: ensureStringField(accessTypeQueryParam, accessType),
   };
 }
 

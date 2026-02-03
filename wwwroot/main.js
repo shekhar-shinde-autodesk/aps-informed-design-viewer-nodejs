@@ -1,43 +1,58 @@
 import { initViewer, loadModel } from "./viewer.js";
+import { productIdQueryParam, releaseIdQueryParam, accessIdQueryParam, accessTypeQueryParam } from "./constants.js";
+
+const PRODUCT_RELEASE_DATA_LOCAL_STORAGE_KEY = "productReleaseData";
 
 function parseProductReleaseFromUrl(location) {
   const params = new URLSearchParams(location.search || "");
 
   return {
-    productId: params.get("productId"),
-    releaseId: params.get("releaseId"),
-    accessId: params.get("accessId"),
-    accessType: params.get("accessType"),
+    productId: params.get(productIdQueryParam),
+    releaseId: params.get(releaseIdQueryParam),
+    accessId: params.get(accessIdQueryParam),
+    accessType: params.get(accessTypeQueryParam),
   };
 }
 
-function saveProductReleaseData(productReleaseData) {
+function buildUrlWithProductReleaseData(productReleaseData) {
+  const url = new URL(window.location.href);
+  url.searchParams.set(productIdQueryParam, productReleaseData.productId);
+  url.searchParams.set(releaseIdQueryParam, productReleaseData.releaseId);
+  url.searchParams.set(accessIdQueryParam, productReleaseData.accessId);
+  url.searchParams.set(accessTypeQueryParam, productReleaseData.accessType);
+  return url.toString();
+}
+
+function saveProductReleaseDataToLocalStorage(productReleaseData) {
   localStorage.setItem(
-    "productReleaseData",
+    PRODUCT_RELEASE_DATA_LOCAL_STORAGE_KEY,
     JSON.stringify(productReleaseData)
   );
 }
 
-function popProductReleaseData() {
+function getProductReleaseDataFromLocalStorage() {
   const productReleaseData = JSON.parse(
-    localStorage.getItem("productReleaseData")
+    localStorage.getItem(PRODUCT_RELEASE_DATA_LOCAL_STORAGE_KEY)
   );
-  if (!productReleaseData) {
-    throw new Error("No product release data found");
-  }
-  localStorage.removeItem("productReleaseData");
   return productReleaseData;
+}
+
+function removeProductReleaseDataFromLocalStorage() {
+  localStorage.removeItem(PRODUCT_RELEASE_DATA_LOCAL_STORAGE_KEY);
 }
 
 function savePreLoginState() {
   const productReleaseData = parseProductReleaseFromUrl(window.location);
-  saveProductReleaseData(productReleaseData);
+  // Only save if there is product release data in the URL
+  if (productReleaseData) {
+    saveProductReleaseDataToLocalStorage(productReleaseData);
+  }
 }
 
 function cleanup(event) {
   window.removeEventListener("beforeunload", wrappedCleanup);
 
-  popProductReleaseData();
+  removeProductReleaseDataFromLocalStorage();
 
   const iframe = document.createElement("iframe");
   iframe.style.visibility = "hidden";
@@ -86,9 +101,23 @@ async function initApp() {
 
       setupCleanup();
 
-      const productReleaseData = popProductReleaseData();
+      const productReleaseDataFromUrl = parseProductReleaseFromUrl(window.location);
+      // If there is a product release data in the URL, save it to local storage
+      if (productReleaseDataFromUrl.productId && productReleaseDataFromUrl.releaseId && productReleaseDataFromUrl.accessId && productReleaseDataFromUrl.accessType) {
+        saveProductReleaseDataToLocalStorage(productReleaseDataFromUrl);
+      }
 
-      loadProductReleaseIntoViewer(productReleaseData);
+      // Check if local storage has product release data
+      const productReleaseData = getProductReleaseDataFromLocalStorage();
+      if (productReleaseData) {
+        // Replace the current URL with the product release data, so the viewer model is consistent
+        // with the URL that was used to login.
+        const url = buildUrlWithProductReleaseData(productReleaseData);
+        window.history.replaceState({}, "", url);
+        loadProductReleaseIntoViewer(productReleaseData);
+      } else {
+        alert("No product release data found in the URL. Please try again.");
+      }
     } else {
       savePreLoginState();
 
