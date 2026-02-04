@@ -1,5 +1,10 @@
 import { initViewer, loadModel } from "./viewer.js";
-import { productIdQueryParam, releaseIdQueryParam, accessIdQueryParam, accessTypeQueryParam } from "./constants.js";
+import {
+  productIdQueryParam,
+  releaseIdQueryParam,
+  accessIdQueryParam,
+  accessTypeQueryParam,
+} from "./constants.js";
 
 const PRODUCT_RELEASE_DATA_LOCAL_STORAGE_KEY = "productReleaseData";
 
@@ -93,6 +98,49 @@ function loadProductReleaseIntoViewer(productReleaseData) {
     });
 }
 
+function ensureStringField(name, value) {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    throw new Error(
+      `${name} query parameter is required. Please check the URL and try again.`
+    );
+  }
+  if (typeof value !== "string") {
+    throw new Error(
+      `${name} query parameter must be a string. Please check the URL and try again.`
+    );
+  }
+  return trimmed;
+}
+
+function ensureValidUuidField(name, value) {
+  const trimmed = ensureStringField(name, value);
+  if (
+    !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+      trimmed
+    )
+  ) {
+    throw new Error(
+      `${name} query parameter must be a valid UUID. Please check the URL and try again.`
+    );
+  }
+  return trimmed;
+}
+
+function createProductReleaseData({
+  productId,
+  releaseId,
+  accessId,
+  accessType,
+}) {
+  return {
+    productId: ensureValidUuidField(productIdQueryParam, productId),
+    releaseId: ensureValidUuidField(releaseIdQueryParam, releaseId),
+    accessId: ensureStringField(accessIdQueryParam, accessId),
+    accessType: ensureStringField(accessTypeQueryParam, accessType),
+  };
+}
+
 async function initApp() {
   try {
     const resp = await fetch("/api/auth/profile");
@@ -101,23 +149,33 @@ async function initApp() {
 
       setupCleanup();
 
-      const productReleaseDataFromUrl = parseProductReleaseFromUrl(window.location);
-      // If there is a product release data in the URL, save it to local storage
-      if (productReleaseDataFromUrl.productId && productReleaseDataFromUrl.releaseId && productReleaseDataFromUrl.accessId && productReleaseDataFromUrl.accessType) {
-        saveProductReleaseDataToLocalStorage(productReleaseDataFromUrl);
+      let productReleaseInput = parseProductReleaseFromUrl(window.location);
+
+      // Retrieve the product release data from local storage if there is no product release data in the URL
+      // This is to ensure that the product gets loaded in case of redirection from the callback API
+      if (
+        !productReleaseInput.productId &&
+        !productReleaseInput.releaseId &&
+        !productReleaseInput.accessId &&
+        !productReleaseInput.accessType
+      ) {
+        productReleaseInput = getProductReleaseDataFromLocalStorage();
+
+        if (productReleaseInput) {
+          removeProductReleaseDataFromLocalStorage();
+          // Replace the current URL with the product release data, so the viewer model is consistent
+          // with the URL that was used to login.
+          const url = buildUrlWithProductReleaseData(productReleaseInput);
+          window.history.replaceState({}, "", url);
+        } else {
+          alert("No product release data found in the URL. Please try again.");
+          return;
+        }
       }
 
-      // Check if local storage has product release data
-      const productReleaseData = getProductReleaseDataFromLocalStorage();
-      if (productReleaseData) {
-        // Replace the current URL with the product release data, so the viewer model is consistent
-        // with the URL that was used to login.
-        const url = buildUrlWithProductReleaseData(productReleaseData);
-        window.history.replaceState({}, "", url);
-        loadProductReleaseIntoViewer(productReleaseData);
-      } else {
-        alert("No product release data found in the URL. Please try again.");
-      }
+      const productReleaseData = createProductReleaseData(productReleaseInput);
+
+      loadProductReleaseIntoViewer(productReleaseData);
     } else {
       savePreLoginState();
 
