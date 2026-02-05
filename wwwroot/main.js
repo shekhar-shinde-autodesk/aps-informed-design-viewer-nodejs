@@ -62,8 +62,6 @@ function savePreLoginState() {
 function cleanup(event) {
   window.removeEventListener("beforeunload", beforeUnloadCleanup);
 
-  removeProductReleaseDataFromLocalStorage();
-
   const iframe = document.createElement("iframe");
   iframe.style.visibility = "hidden";
   iframe.src = "https://accounts.autodesk.com/Authentication/LogOut";
