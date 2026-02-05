@@ -1,5 +1,3 @@
-import { productIdQueryParam, releaseIdQueryParam, accessIdQueryParam, accessTypeQueryParam } from "./constants.js";
-
 async function getAccessToken(callback) {
   try {
     const resp = await fetch("/api/auth/token");
@@ -48,42 +46,13 @@ export function initViewer(container) {
   });
 }
 
-function ensureStringField(name, value) {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    throw new Error(`${name} query parameter is required. Please check the URL and try again.`);
+export async function loadModel(extension, { releaseId, accessId, accessType, productId }) {
+  try {
+    extension.setProductReleaseDataToFetch({ releaseId, accessId, accessType, productId });
+    extension.fetchProductRelease();
+    extension.loadProductReleaseDefaultVariantSVF();
+  } catch (error) {
+    alert("Could not load model. See the console for more details.");
+    console.error(error);
   }
-  if (typeof value !== "string") {
-    throw new Error(`${name} query parameter must be a string. Please check the URL and try again.`);
-  }
-  return trimmed;
-}
-
-function ensureValidUuidField(name, value) {
-  const trimmed = ensureStringField(name, value);
-  if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(trimmed)) {
-    throw new Error(`${name} query parameter must be a valid UUID. Please check the URL and try again.`);
-  }
-  return trimmed;
-}
-
-export function createProductReleaseData({
-  productId,
-  releaseId,
-  accessId,
-  accessType,
-}) {
-  return {
-    productId: ensureValidUuidField(productIdQueryParam, productId),
-    releaseId: ensureValidUuidField(releaseIdQueryParam, releaseId),
-    accessId: ensureStringField(accessIdQueryParam, accessId),
-    accessType: ensureStringField(accessTypeQueryParam, accessType),
-  };
-}
-
-export async function loadModel(extension, productReleaseInput) {
-  const productReleaseData = createProductReleaseData(productReleaseInput);
-  extension.setProductReleaseDataToFetch(productReleaseData);
-  extension.fetchProductRelease();
-  extension.loadProductReleaseDefaultVariantSVF();
 }
