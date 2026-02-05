@@ -60,7 +60,7 @@ function savePreLoginState() {
 }
 
 function cleanup(event) {
-  window.removeEventListener("beforeunload", wrappedCleanup);
+  window.removeEventListener("beforeunload", beforeUnloadCleanup);
 
   removeProductReleaseDataFromLocalStorage();
 
@@ -88,40 +88,33 @@ async function loadProductReleaseIntoViewer({
   accessType,
   accessToken,
 }) {
-  if (!releaseId || !accessId || !accessType) {
-    alert("Product release data is incomplete. Please try again.");
-    return;
-  }
+  try {
+    if (!releaseId || !accessId || !accessType) {
+      alert("Product release data is incomplete. Please try again.");
+      return;
+    }
 
-  const release = await getReleaseById({
-    releaseId,
-    accessId,
-    accessType,
-    accessToken,
-  });
-  initViewer(document.getElementById("preview"))
-    .then(async (viewer) => {
-      try {
-        const extension = await viewer.getExtensionAsync(
-          "Autodesk.InformedDesign"
-        );
-        await loadModel(extension, {
-          releaseId: release.id,
-          accessId: release.accessId,
-          accessType: release.accessType,
-          productId: release.productId,
-        });
-      } catch (err) {
-        alert(
-          "Could not load product release. See the console for more details."
-        );
-        console.error(err);
-      }
-    })
-    .catch((err) => {
-      alert("Could not initialize viewer. See the console for more details.");
-      console.error(err);
+    const release = await getReleaseById({
+      releaseId,
+      accessId,
+      accessType,
+      accessToken,
     });
+
+    const viewer = await initViewer(document.getElementById("preview"));
+
+    const extension = await viewer.getExtensionAsync("Autodesk.InformedDesign");
+
+    await loadModel(extension, {
+      releaseId: release.id,
+      accessId: release.accessId,
+      accessType: release.accessType,
+      productId: release.productId,
+    });
+  } catch (err) {
+    alert("Could not initialize viewer. See the console for more details.");
+    console.error(err);
+  }
 }
 
 async function initApp() {
@@ -154,12 +147,16 @@ async function initApp() {
         });
       }
 
-
-      const productReleaseDataFromLocalStorage = getProductReleaseDataFromLocalStorage();
-      validateUserProvidedProductReleaseData(productReleaseDataFromLocalStorage);
+      const productReleaseDataFromLocalStorage =
+        getProductReleaseDataFromLocalStorage();
+      validateUserProvidedProductReleaseData(
+        productReleaseDataFromLocalStorage
+      );
       // Replace the current URL with the product release data, so the viewer model is consistent
       // with the URL that was used to login.
-      const url = buildUrlWithProductReleaseData(productReleaseDataFromLocalStorage);
+      const url = buildUrlWithProductReleaseData(
+        productReleaseDataFromLocalStorage
+      );
       window.history.replaceState({}, "", url);
       loadProductReleaseIntoViewer({
         releaseId: productReleaseDataFromLocalStorage.releaseId,
